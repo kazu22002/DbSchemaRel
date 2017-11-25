@@ -1,0 +1,6 @@
+{
+  "user":"default",
+  "db_name" : "default",
+  "pass" : "secret",
+  "host" : "127.0.0.1"
+}
