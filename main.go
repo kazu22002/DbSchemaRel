@@ -103,48 +103,88 @@ func getColumns(db *sql.DB, db_name string, table_name string) ([]string, error)
 	return ret, err
 }
 
+/**
+ * ループで回した時に、ランダムに抽出されたためキーのみ配列を作成する。
+ */
 var singular_rules = map[string]string{
-	"(s)tatuses$":     "12tatus",
-	"^(.*)(menu)s$":   "12",
-	"(quiz)zes$":      "1",
-	"(matr)ices$":     "1ix",
-	"(vert|ind)ices$": "1ex",
-	"^(ox)en":         "1",
-	"(alias)(es)*$":   "1",
-	"(alumn|bacill|cact|foc|fung|nucle|radi|stimul|syllab|termin|viri?)i$": "1us",
-	"([ftw]ax)es":        "1",
-	"(cris|ax|test)es$":  "1is",
-	"(shoe|slave)s$":     "1",
-	"(o)es$":             "1",
+	"(s)tatuses$":     "${1}tatus",
+	"^(.*)(menu)s$":   "${1}",
+	"(quiz)zes$":      "${1}",
+	"(matr)ices$":     "${1}ix",
+	"(vert|ind)ices$": "${1}ex",
+	"^(ox)en":         "${1}",
+	"(alias)(es)*$":   "${1}",
+	"(alumn|bacill|cact|foc|fung|nucle|radi|stimul|syllab|termin|viri?)i$": "${1}us",
+	"([ftw]ax)es":        "${1}",
+	"(cris|ax|test)es$":  "${1}is",
+	"(shoe|slave)s$":     "${1}",
+	"(o)es$":             "${1}",
 	"ouses$":             "ouse",
-	"([^a])uses$":        "1us",
-	"([m|l])ice$":        "1ouse",
-	"(x|ch|ss|sh)es$":    "1",
-	"(m)ovies$":          "12ovie",
-	"(s)eries$":          "12eries",
-	"([^aeiouy]|qu)ies$": "1y",
-	"([lr])ves$":         "1f",
-	"(tive)s$":           "1",
-	"(hive)s$":           "1",
-	"(drive)s$":          "1",
-	"([^fo])ves$":        "1fe",
-	"(^analy)ses$":       "1sis",
-	"(analy|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)ses$": "12sis",
-	"([ti])a$":    "1um",
-	"(p)eople$":   "12erson",
-	"(m)en$":      "1an",
-	"(c)hildren$": "12hild",
-	"(n)ews$":     "12ews",
+	"([^a])uses$":        "${1}us",
+	"([m|l])ice$":        "${1}ouse",
+	"(x|ch|ss|sh)es$":    "${1}",
+	"(m)ovies$":          "${1}ovie",
+	"(s)eries$":          "${1}eries",
+	"([^aeiouy]|qu)ies$": "${1}y",
+	"([lr])ves$":         "${1}f",
+	"(tive)s$":           "${1}",
+	"(hive)s$":           "${1}",
+	"(drive)s$":          "${1}",
+	"([^fo])ves$":        "${1}fe",
+	"(^analy)ses$":       "${1}sis",
+	"(analy|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)ses$": "${1}sis",
+	"([ti])a$":    "${1}um",
+	"(p)eople$":   "${1}erson",
+	"(m)en$":      "${1}an",
+	"(c)hildren$": "${1}hild",
+	"(n)ews$":     "${1}ews",
 	"eaus$":       "eau",
-	"^(.*us)$":    "1",
+	"^(.*us)$":    "${1}",
 	"s$":          ""}
+
+var singular_rules_sort = []string{
+	"(s)tatuses$",
+	"^(.*)(menu)s$",
+	"(quiz)zes$",
+	"(matr)ices$",
+	"(vert|ind)ices$",
+	"^(ox)en",
+	"(alias)(es)*$",
+	"(alumn|bacill|cact|foc|fung|nucle|radi|stimul|syllab|termin|viri?)i$",
+	"([ftw]ax)es",
+	"(cris|ax|test)es$",
+	"(shoe|slave)s$",
+	"(o)es$",
+	"ouses$",
+	"([^a])uses$",
+	"([m|l])ice$",
+	"(x|ch|ss|sh)es$",
+	"(m)ovies$",
+	"(s)eries$",
+	"([^aeiouy]|qu)ies$",
+	"([lr])ves$",
+	"(tive)s$",
+	"(hive)s$",
+	"(drive)s$",
+	"([^fo])ves$",
+	"(^analy)ses$",
+	"(analy|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)ses$",
+	"([ti])a$",
+	"(p)eople$",
+	"(m)en$",
+	"(c)hildren$",
+	"(n)ews$",
+	"eaus$",
+	"^(.*us)$",
+	"s$",
+}
 
 func singleName(name string) string {
 	var single_name = name
 
-	for key, replace := range singular_rules {
+	for _, key := range singular_rules_sort {
 		if regexp.MustCompile(key).MatchString(name) {
-			single_name = regexp.MustCompile(key).ReplaceAllString(name, replace)
+			single_name = regexp.MustCompile(key).ReplaceAllString(name, singular_rules[key])
 			break
 		}
 	}
@@ -166,7 +206,7 @@ func Output(data []DbSchema) {
 	content.WriteString("package \"データベース\" as ext <<Database>> {")
 	content.WriteString(recode)
 	for i := 0; i < count; i++ {
-		content.WriteString("  entity \"" + data[i].table + "\" " + data[i].table + " {")
+		content.WriteString("  entity \"" + data[i].table + "\" as " + data[i].table + " {")
 		content.WriteString(recode)
 
 		column_count := len(data[i].columns)
@@ -179,6 +219,21 @@ func Output(data []DbSchema) {
 	}
 	content.WriteString("}")
 	content.WriteString(recode)
+
+	for i := 0; i < count; i++ {
+		single_id := singleName(data[i].table) + "_id"
+		for l := 0; l < count; l++ {
+			column_count := len(data[l].columns)
+			for m := 0; m < column_count; m++ {
+				column_name := data[l].columns[m]
+				if single_id == column_name {
+					content.WriteString(data[i].table + " - " + data[l].table)
+					content.WriteString(recode)
+				}
+			}
+		}
+	}
+
 	content.WriteString("@enduml")
 	content.WriteString(recode)
 
